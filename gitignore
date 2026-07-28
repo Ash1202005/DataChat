@@ -1,0 +1,14 @@
+# ── Secrets — NEVER upload these ──────────────────────────────
+.env
+
+# ── Node.js dependencies — too large, reinstalled via npm install ──
+node_modules/
+package-lock.json
+
+# ── OS files ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Editor files ───────────────────────────────────────────────
+.vscode/
+*.log

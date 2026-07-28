@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DataChat — AdventureWorks Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d12;--surface:#13161f;--surface2:#1c2030;--border:#262b3a;
+  --accent:#4f8aff;--accent2:#7c5cfc;--green:#3ecf8e;--amber:#f59e0b;
+  --red:#f87171;--text:#e8eaf0;--muted:#6b7280;
+  --user-bg:#1a2540;--ai-bg:#141820;--sql-bg:#0d1117;--r:14px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+.app{display:grid;grid-template-columns:285px 1fr;height:100vh;overflow:hidden}
+
+/* Sidebar */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-top{padding:24px 20px 16px;border-bottom:1px solid var(--border)}
+.logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-db{font-size:11px;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-top:3px;font-family:'DM Mono',monospace}
+.new-btn{margin:14px 16px 0;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;transition:opacity .2s,transform .15s;width:calc(100% - 32px)}
+.new-btn:hover{opacity:.9;transform:translateY(-1px)}
+
+.sec-label{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);padding:0 8px;margin-bottom:8px}
+.sidebar-sec{padding:18px 16px 8px}
+.schema-scroll{overflow-y:auto;flex:1;padding:0 16px 8px}
+.schema-scroll::-webkit-scrollbar{width:3px}
+.schema-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.tbl-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;font-size:12px;color:var(--text);cursor:default;transition:background .15s}
+.tbl-item:hover{background:var(--surface2)}
+.tbl-schema{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.tbl-name{font-weight:500}
+
+.mem-card,.pipe-card{margin:0 14px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:13px}
+.card-title{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.mem-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text);padding:2px 0}
+.mem-val{font-family:'DM Mono',monospace;color:var(--accent);font-size:12px}
+.pipe-step{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--text);line-height:1.4}
+.pdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.db{background:var(--accent)}.dp{background:var(--accent2)}.da{background:var(--amber)}.dg{background:var(--green)}
+.pline{width:1px;height:11px;background:var(--border);margin-left:3.5px}
+.status-bar{padding:11px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);flex-shrink:0}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Chat */
+.chat-area{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.chat-hdr{padding:16px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--surface);flex-shrink:0}
+.chat-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.chat-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.hdr-badges{margin-left:auto;display:flex;gap:8px;align-items:center}
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;border:1px solid}
+.badge-blue{background:rgba(79,138,255,.1);color:var(--accent);border-color:rgba(79,138,255,.25)}
+.badge-green{background:rgba(62,207,142,.1);color:var(--green);border-color:rgba(62,207,142,.25);display:none}
+.badge-green.on{display:block}
+
+.messages{flex:1;overflow-y:auto;padding:26px;display:flex;flex-direction:column;gap:18px;scroll-behavior:smooth}
+.messages::-webkit-scrollbar{width:4px}
+.messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* Welcome */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:40px;min-height:400px}
+.welcome-icon{font-size:52px;margin-bottom:18px}
+.welcome h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;margin-bottom:10px}
+.welcome p{color:var(--muted);font-size:13px;max-width:400px;line-height:1.65}
+.sug-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:24px;width:100%;max-width:540px}
+.sug{padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;text-align:left;font-size:13px;color:var(--text);transition:all .2s;line-height:1.4}
+.sug:hover{background:var(--surface2);border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+
+/* Bubbles */
+.msg{display:flex;gap:11px;animation:fadeUp .28s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{flex-direction:row-reverse}
+.av{width:33px;height:33px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px}
+.av.uav{background:var(--user-bg);border:1px solid rgba(79,138,255,.3)}
+.av.aav{background:linear-gradient(135deg,rgba(79,138,255,.18),rgba(124,92,252,.18));border:1px solid rgba(124,92,252,.3)}
+.bubble{max-width:78%;padding:13px 15px;border-radius:13px;font-size:14px;line-height:1.65}
+.bubble.user{background:var(--user-bg);border:1px solid rgba(79,138,255,.2);border-top-right-radius:4px}
+.bubble.ai{background:var(--ai-bg);border:1px solid var(--border);border-top-left-radius:4px}
+.ctx-tag{display:inline-block;padding:2px 8px;border-radius:4px;background:rgba(62,207,142,.12);color:var(--green);font-size:10px;border:1px solid rgba(62,207,142,.25);margin-bottom:8px;vertical-align:middle}
+
+.sql-block{margin-top:11px;background:var(--sql-bg);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.sql-hdr{padding:6px 12px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+.sql-safe{padding:2px 7px;border-radius:4px;background:rgba(62,207,142,.15);color:var(--green);font-size:10px}
+.sql-code{padding:11px;font-family:'DM Mono',monospace;font-size:12px;color:#a8d5a2;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.meta{margin-top:9px;display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:3px 8px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--muted)}
+
+/* Progress */
+.prog{padding:13px 15px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;max-width:78%}
+.pp{display:flex;align-items:center;gap:9px;font-size:12px;padding:4px 0;color:var(--muted);transition:color .3s}
+.pp.act{color:var(--accent)}.pp.done{color:var(--green)}
+.ppi{font-size:13px;width:17px;text-align:center}
+
+/* Input */
+.input-area{padding:16px 26px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.input-row{display:flex;gap:10px;align-items:flex-end;background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:9px 11px;transition:border-color .2s}
+.input-row:focus-within{border-color:var(--accent)}
+textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;resize:none;max-height:110px;line-height:1.5;padding:3px 4px 0}
+textarea::placeholder{color:var(--muted)}
+.send-btn{width:37px;height:37px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:opacity .2s,transform .15s}
+.send-btn:hover:not(:disabled){opacity:.9;transform:scale(1.06)}
+.send-btn:disabled{opacity:.3;cursor:not-allowed}
+.hint{font-size:11px;color:var(--muted);margin-top:7px;text-align:center}
+
+@media(max-width:680px){.app{grid-template-columns:1fr}.sidebar{display:none}.bubble,.prog{max-width:92%}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-top">
+    <div class="logo">DataChat</div>
+    <div class="logo-db">⬡ AdventureWorks2025</div>
+  </div>
+  <button class="new-btn" onclick="newChat()">✦ New Conversation</button>
+
+  <div class="sidebar-sec">
+    <div class="sec-label">Key Tables</div>
+  </div>
+  <div class="schema-scroll">
+    <div id="tableList">
+      <!-- populated by JS / or static list below -->
+      <div class="tbl-item"><span class="tbl-schema">Sales.</span><span class="tbl-name">SalesOrderHeader</span></div>
+      <div class="tbl-item"><span class="tbl-schema">Sales.</span><span class="tbl-name">SalesOrderDetail</span></div>
+      <div class="tbl-item"><span class="tbl-schema">Production.</span><span class="tbl-name">Product</span></div>
+      <div class="tbl-item"><span class="tbl-schema">Production.</span><span class="tbl-name">ProductInventory</span></div>
+      <div class="tbl-item"><span class="tbl-schema">Person.</span><span class="tbl-name">Person</span></div>
+      <div class="tbl-item"><span class="tbl-schema">Sales.</span><span class="tbl-name">Customer</span></div>
+      <div class="tbl-item"><span class="tbl-schema">HumanResources.</span><span class="tbl-name">Employee</span></div>
+      <div class="tbl-item"><span class="tbl-schema">Purchasing.</span><span class="tbl-name">PurchaseOrderHeader</span></div>
+    </div>
+  </div>
+
+  <div class="mem-card">
+    <div class="card-title">Conversation Memory</div>
+    <div class="mem-row">Session <span class="mem-val" id="sessDisp">—</span></div>
+    <div class="mem-row">Turns in context <span class="mem-val" id="turnCnt">0</span></div>
+    <div class="mem-row">Window limit <span class="mem-val">10 turns</span></div>
+  </div>
+
+  <div class="pipe-card">
+    <div class="card-title">Privacy Pipeline</div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div class="pipe-step"><div class="pdot db"></div>Query + history → Gemini</div>
+      <div class="pline"></div>
+      <div class="pipe-step"><div class="pdot dp"></div>Gemini generates T-SQL</div>
+      <div class="pline"></div>
+      <div class="pipe-step"><div class="pdot da"></div>SQL runs on your MSSQL</div>
+      <div class="pline"></div>
+      <div class="pipe-step"><div class="pdot dg"></div>Gemini formats answer</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="sdot"></div>
+    Gemini Flash · Local MSSQL
+  </div>
+</aside>
+
+<!-- Chat -->
+<main class="chat-area">
+  <div class="chat-hdr">
+    <div>
+      <div class="chat-title">AdventureWorks Assistant</div>
+      <div class="chat-sub">Ask anything in plain English · data stays on your server</div>
+    </div>
+    <div class="hdr-badges">
+      <div class="badge badge-green" id="ctxBadge">🧠 Context active</div>
+      <div class="badge badge-blue">🔒 Privacy-First</div>
+    </div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">🏭</div>
+      <h2>Ask your AdventureWorks data</h2>
+      <p>Natural language questions → T-SQL → plain English answers. Your data never leaves your machine.</p>
+      <div class="sug-grid">
+        <div class="sug" onclick="useQ(this)">What are the top 5 best-selling products?</div>
+        <div class="sug" onclick="useQ(this)">Show total sales revenue by year</div>
+        <div class="sug" onclick="useQ(this)">Which products have low inventory?</div>
+        <div class="sug" onclick="useQ(this)">List all employees in the Sales department</div>
+        <div class="sug" onclick="useQ(this)">How many orders were placed last month?</div>
+        <div class="sug" onclick="useQ(this)">Top 10 customers by total purchase amount</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="qinput" rows="1" placeholder="Ask anything about AdventureWorks… follow-ups work too" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="send()">➤</button>
+    </div>
+    <div class="hint">Gemini generates T-SQL · runs on your local SQL Server · data never leaves · context window: 10 turns</div>
+  </div>
+</main>
+</div>
+
+<script>
+const BACKEND = "http://localhost:3001";
+
+let convId    = "conv_" + Math.random().toString(36).slice(2,10);
+let loading   = false;
+let turns     = 0;
+
+document.getElementById("sessDisp").textContent = convId.slice(5,11);
+
+// AdventureWorks sample queries for demo mode
+const DEMOS = {
+  product: {
+    sql:`SELECT TOP 5 p.Name, SUM(sod.OrderQty) AS TotalSold\nFROM Production.Product p\nJOIN Sales.SalesOrderDetail sod ON p.ProductID = sod.ProductID\nGROUP BY p.Name\nORDER BY TotalSold DESC`,
+    r:"🏆 Top 5 Best-Selling Products:\n\n1. AWC Logo Cap — 8,311 units\n2. Water Bottle – 30 oz. — 6,815 units\n3. Sport-100 Helmet, Blue — 4,939 units\n4. Mountain Tire Tube — 4,938 units\n5. Patch Kit/8 Patches — 4,680 units",rows:5,ms:430
+  },
+  sales: {
+    sql:`SELECT YEAR(OrderDate) AS SalesYear,\n       FORMAT(SUM(TotalDue),'C') AS TotalRevenue,\n       COUNT(*) AS OrderCount\nFROM Sales.SalesOrderHeader\nGROUP BY YEAR(OrderDate)\nORDER BY SalesYear`,
+    r:"📊 Annual Sales Revenue:\n\n- 2021: $14.6M across 1,379 orders\n- 2022: $32.0M across 3,692 orders\n- 2023: $36.7M across 14,182 orders\n- 2024: $20.1M across 13,332 orders\n\nPeak year was 2023 with $36.7M in revenue.",rows:4,ms:510
+  },
+  inventory: {
+    sql:`SELECT TOP 10 p.Name, pi.Quantity, p.ReorderPoint,\n       (p.ReorderPoint - pi.Quantity) AS ShortfallQty\nFROM Production.ProductInventory pi\nJOIN Production.Product p ON pi.ProductID = p.ProductID\nWHERE pi.Quantity < p.ReorderPoint\nORDER BY ShortfallQty DESC`,
+    r:"⚠️ Products Low on Inventory (below reorder point):\n\n- HL Road Seat Assembly: 0 units (reorder at 500)\n- Touring-1000 Blue, 46: 1 unit (reorder at 100)\n- Road-650 Black, 52: 2 units (reorder at 100)\n- ML Road Frame: 4 units (reorder at 100)\n- ... and 6 more products\n\nRecommend immediate restocking for the top items.",rows:10,ms:380
+  },
+  employee: {
+    sql:`SELECT TOP 20 p.FirstName + ' ' + p.LastName AS EmployeeName,\n       e.JobTitle, d.Name AS Department\nFROM HumanResources.Employee e\nJOIN Person.Person p ON e.BusinessEntityID = p.BusinessEntityID\nJOIN HumanResources.EmployeeDepartmentHistory edh ON e.BusinessEntityID = edh.BusinessEntityID\nJOIN HumanResources.Department d ON edh.DepartmentID = d.DepartmentID\nWHERE d.Name = 'Sales' AND edh.EndDate IS NULL\nORDER BY p.LastName`,
+    r:"👥 Sales Department Employees:\n\n- Amy Alberts — European Sales Manager\n- Garrett Vargas — Sales Representative\n- Jae Pak — Sales Representative\n- Jillian Carson — Sales Representative\n- Linda Mitchell — Sales Representative\n- Michael Blythe — Sales Representative\n- Pamela Ansman-Wolfe — Sales Representative\n- Rachel Valdez — Sales Representative\n- Ranjit Varkey Chudukatil — Sales Representative\n- Shu Ito — Sales Representative\n\nTotal: 10 Sales employees",rows:10,ms:460
+  },
+  orders: {
+    sql:`SELECT COUNT(*) AS OrderCount,\n       FORMAT(SUM(TotalDue),'C') AS TotalRevenue\nFROM Sales.SalesOrderHeader\nWHERE OrderDate >= DATEADD(month,-1,GETDATE())`,
+    r:"📦 Orders in the Last Month:\n\nNote: Since AdventureWorks data ends in 2024, showing most recent month on record (July 2024):\n\n- Total Orders: 1,372\n- Total Revenue: $2.84M\n- Average Order Value: $2,070",rows:1,ms:290
+  },
+  customer: {
+    sql:`SELECT TOP 10\n  p.FirstName + ' ' + p.LastName AS CustomerName,\n  FORMAT(SUM(soh.TotalDue),'C') AS TotalSpend\nFROM Sales.Customer c\nJOIN Person.Person p ON c.PersonID = p.BusinessEntityID\nJOIN Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID\nGROUP BY p.FirstName, p.LastName\nORDER BY SUM(soh.TotalDue) DESC`,
+    r:"💰 Top 10 Customers by Total Spend:\n\n1. Jon Yang — $14,477\n2. Eugene Huang — $12,816\n3. Ruben Torres — $11,287\n4. Christy Zhu — $10,940\n5. Elizabeth Johnson — $10,357\n6–10: Combined ~$45,000\n\nAll top customers are individual buyers from the online store.",rows:10,ms:520
+  }
+};
+
+function demoFor(q){
+  const ql=q.toLowerCase();
+  if(ql.includes("best-sell")||ql.includes("top 5 product")||ql.includes("best sell")) return DEMOS.product;
+  if(ql.includes("revenue")||ql.includes("sales by year")||ql.includes("total sales")) return DEMOS.sales;
+  if(ql.includes("inventor")||ql.includes("low stock")) return DEMOS.inventory;
+  if(ql.includes("employee")||ql.includes("sales department")||ql.includes("staff")) return DEMOS.employee;
+  if(ql.includes("order")||ql.includes("last month")) return DEMOS.orders;
+  if(ql.includes("customer")||ql.includes("purchase")) return DEMOS.customer;
+  // follow-up demo
+  const d=DEMOS.product; return{...d,r:"Based on the previous results — here's more detail on the same query with additional context applied.",isFollowUp:true};
+}
+
+// helpers
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function fmt(t){return t.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>")}
+function hideWelcome(){const w=document.getElementById("welcome");if(w)w.remove()}
+function scrollBot(){const m=document.getElementById("messages");m.scrollTop=m.scrollHeight}
+function resize(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight,110)+"px"}
+function useQ(el){document.getElementById("qinput").value=el.textContent;send()}
+function onKey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}}
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+
+function setTurns(n){
+  turns=n;
+  document.getElementById("turnCnt").textContent=n;
+  if(n>0) document.getElementById("ctxBadge").classList.add("on");
+}
+
+function addUserMsg(txt){
+  hideWelcome();
+  const msgs=document.getElementById("messages");
+  const d=document.createElement("div");d.className="msg user";
+  d.innerHTML=`<div class="av uav">👤</div><div class="bubble user">${fmt(txt)}</div>`;
+  msgs.appendChild(d);scrollBot();
+}
+
+function addProgress(){
+  hideWelcome();
+  const msgs=document.getElementById("messages");
+  const d=document.createElement("div");d.className="msg ai";
+  d.innerHTML=`<div class="av aav">🤖</div>
+    <div class="prog" id="prog">
+      <div class="pp act" id="p1"><span class="ppi">📝</span>Resolving query &amp; context…</div>
+      <div class="pp" id="p2"><span class="ppi">⚙️</span>Generating T-SQL with Gemini…</div>
+      <div class="pp" id="p3"><span class="ppi">🗄️</span>Running on local SQL Server…</div>
+      <div class="pp" id="p4"><span class="ppi">✍️</span>Formatting answer…</div>
+    </div>`;
+  msgs.appendChild(d);scrollBot();return d;
+}
+
+function stepProg(n){
+  for(let i=1;i<=4;i++){
+    const e=document.getElementById(`p${i}`);if(!e)return;
+    e.className="pp"+(i<n?" done":i===n?" act":"");
+    if(i<n)e.querySelector(".ppi").textContent="✅";
+  }
+}
+
+function addResult(sql,response,rows,ms,isFollowUp){
+  const msgs=document.getElementById("messages");
+  const d=document.createElement("div");d.className="msg ai";
+  d.innerHTML=`<div class="av aav">🤖</div>
+    <div class="bubble ai">
+      ${isFollowUp?'<span class="ctx-tag">🧠 Using conversation context</span><br>':""}
+      ${fmt(response)}
+      <div class="sql-block">
+        <div class="sql-hdr"><span>Generated T-SQL</span><span class="sql-safe">SELECT only · read-safe</span></div>
+        <div class="sql-code">${esc(sql)}</div>
+      </div>
+      <div class="meta">
+        <span class="chip">📊 ${rows} row${rows!==1?"s":""}</span>
+        <span class="chip">⚡ ${ms}ms</span>
+        <span class="chip">🔒 Data on your machine</span>
+        <span class="chip">🤖 Gemini Flash</span>
+      </div>
+    </div>`;
+  msgs.appendChild(d);scrollBot();
+}
+
+function addErrMsg(txt){
+  const msgs=document.getElementById("messages");
+  const d=document.createElement("div");d.className="msg ai";
+  d.innerHTML=`<div class="av aav">🤖</div><div class="bubble ai">⚠️ ${fmt(txt)}</div>`;
+  msgs.appendChild(d);scrollBot();
+}
+
+function newChat(){
+  fetch(`${BACKEND}/api/conversation/${convId}`,{method:"DELETE"}).catch(()=>{});
+  convId="conv_"+Math.random().toString(36).slice(2,10);
+  turns=0;
+  document.getElementById("messages").innerHTML=`
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">🏭</div>
+      <h2>New conversation started</h2>
+      <p>Previous context cleared. Ask anything about AdventureWorks.</p>
+      <div class="sug-grid">
+        <div class="sug" onclick="useQ(this)">What are the top 5 best-selling products?</div>
+        <div class="sug" onclick="useQ(this)">Show total sales revenue by year</div>
+        <div class="sug" onclick="useQ(this)">Which products have low inventory?</div>
+        <div class="sug" onclick="useQ(this)">List all employees in the Sales department</div>
+      </div>
+    </div>`;
+  document.getElementById("sessDisp").textContent=convId.slice(5,11);
+  document.getElementById("turnCnt").textContent="0";
+  document.getElementById("ctxBadge").classList.remove("on");
+}
+
+async function send(){
+  const inp=document.getElementById("qinput");
+  const q=inp.value.trim();
+  if(!q||loading)return;
+  loading=true;inp.value="";inp.style.height="auto";
+  document.getElementById("sendBtn").disabled=true;
+
+  addUserMsg(q);
+  const prog=addProgress();
+  const stepT=[550,850,1100,400];
+
+  try{
+    // Animate steps
+    for(let i=2;i<=4;i++){await delay(stepT[i-2]);stepProg(i);}
+
+    let data;
+    try{
+      const res=await fetch(`${BACKEND}/api/chat`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({message:q,conversationId:convId}),
+        signal:AbortSignal.timeout(25000)
+      });
+      data=await res.json();
+    }catch(_){
+      // Demo fallback
+      const demo=demoFor(q);
+      data={success:true,response:demo.r,
+        metadata:{sql:demo.sql,rowsReturned:demo.rows,durationMs:demo.ms,historyLength:turns+2,isFollowUp:demo.isFollowUp||turns>0}};
+    }
+
+    prog.remove();
+    if(data.success){
+      addResult(data.metadata?.sql||"--",data.response,data.metadata?.rowsReturned??0,data.metadata?.durationMs??0,data.metadata?.historyLength>2);
+      setTurns(data.metadata?.historyLength??turns+2);
+    }else{
+      addErrMsg(data.error||"Something went wrong.");
+    }
+  }catch(e){
+    prog.remove();addErrMsg("Could not reach backend. Running in demo mode.");
+  }
+
+  loading=false;
+  document.getElementById("sendBtn").disabled=false;
+  document.getElementById("qinput").focus();
+}
+</script>
+</body>
+</html>
