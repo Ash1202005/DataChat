@@ -26,7 +26,7 @@ User Question
          → Returns a plain-English answer
 ```
 
-> **Privacy guarantee:** The AI only ever sees your database *structure* (table names, column names) — never your actual data rows, until the specific result of one query is returned for formatting.
+The AI only ever sees your database *structure* (table names, column names) — never your actual data rows, until the specific result of one query is returned for formatting.
 
 ---
 
