@@ -65,6 +65,9 @@ datachat/
 └── frontend/
     └── index.html         ← Web chat UI (open directly in browser)
 ```
+## Output
+
+<img width="2880" height="1454" alt="Screenshot 2026-07-28 235514" src="https://github.com/user-attachments/assets/a7dc6109-2bfb-4386-b002-8953773fc77e" />
 
 ---
 
