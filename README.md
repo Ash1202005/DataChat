@@ -49,8 +49,7 @@ The AI only ever sees your database *structure* (table names, column names) — 
 | Backend | Node.js + Express |
 | Database | Microsoft SQL Server (local) |
 | Frontend | Vanilla HTML / CSS / JS |
-| AI SDK | @google/genai |
-| DB Driver | mssql (npm) |
+
 
 ---
 
